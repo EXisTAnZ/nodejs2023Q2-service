@@ -1,9 +1,11 @@
-import { userCollection } from './db';
+import { CreateTrackDto } from 'src/track/dto/create-track.dto';
+import { trackCollection, userCollection } from './db';
 import { pbkdf2Sync } from 'crypto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { User } from 'src/user/entities/user.entity';
-import { ERROR_MSG } from 'src/utils/constants';
+import { Track } from 'src/track/entities/track.entity';
+import { UpdateTrackDto } from 'src/track/dto/update-track.dto';
 
 export default class DBEngine {
   public async getUsers(): Promise<User[]> {
@@ -52,12 +54,31 @@ export default class DBEngine {
     return pbkdf2Sync(password, 'secret', 5, 64, 'sha256').toString();
   }
 
-  public userValidator(user: User) {
-    const { login, password } = user;
-    const regexp = /^[a-zA-Z0-9@.а-яА-Я_-]+$/;
-    if (!login || login.length < 5) throw new Error(ERROR_MSG.SHORT_USERNAME);
-    if (!login.match(regexp)) throw new Error(ERROR_MSG.INVALID_USERNAME);
-    if (!password || password.length < 5)
-      throw new Error(ERROR_MSG.SHORT_PASSWORD);
+  public async getTracks() {
+    return trackCollection;
+  }
+
+  public async getTrack(trackId: string) {
+    return trackCollection.find((track) => track.id === trackId);
+  }
+
+  public async addTrack(track: CreateTrackDto) {
+    const newTrack = new Track(track);
+    trackCollection.push(newTrack);
+    return newTrack;
+  }
+
+  public async updateTrack(trackId: string, track: UpdateTrackDto) {
+    const updatedTrack = await this.getTrack(trackId);
+    updatedTrack.name = track.name || updatedTrack.name;
+    updatedTrack.albumId = track.albumId || updatedTrack.albumId;
+    updatedTrack.artistId = track.artistId || updatedTrack.artistId;
+    updatedTrack.duration = track.duration || updatedTrack.duration;
+    return updatedTrack;
+  }
+
+  public async deleteTrack(trackId: string) {
+    const idx = trackCollection.findIndex((track) => track.id === trackId);
+    trackCollection.splice(idx);
   }
 }
