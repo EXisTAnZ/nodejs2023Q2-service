@@ -26,11 +26,12 @@ export default class DBEngine {
   }
 
   public async updateUser(userId: string, user: UpdateUserDto) {
-    this.existedUser(userId).password = this.hashPass(user.newPassword);
+    this.existedUser(userId).update(user.newPassword);
   }
 
   public async deleteUser(userId: string) {
-    userCollection.filter((user) => user.id !== userId);
+    const idx = userCollection.findIndex((user) => user.id === userId);
+    userCollection.splice(idx);
   }
 
   public existedLogin(login: string) {

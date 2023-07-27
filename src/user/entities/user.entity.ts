@@ -4,9 +4,9 @@ export class User {
   public id: string;
   public login: string;
   public password: string;
-  public version: number;
-  public createdAt: number;
-  public updatedAt: number;
+  private version: number;
+  private createdAt: number;
+  private updatedAt: number;
 
   constructor(login: string, password: string) {
     this.id = v4();
@@ -17,8 +17,7 @@ export class User {
     this.updatedAt = new Date().getTime();
   }
 
-  public update(login: string, newPassword: string) {
-    this.login = login;
+  public update(newPassword: string) {
     this.password = newPassword;
     this.version++;
     this.updatedAt = new Date().getTime();
