@@ -5,9 +5,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsString()
   @IsNotEmpty()
-  login: string;
+  oldPassword: string;
 
   @IsString()
   @IsNotEmpty()
-  password: string;
+  newPassword: string;
 }
