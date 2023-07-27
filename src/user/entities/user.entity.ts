@@ -1,8 +1,10 @@
+import { Exclude } from 'class-transformer';
 import { v4 } from 'uuid';
 
 export class User {
   public id: string;
   public login: string;
+  @Exclude()
   public password: string;
   private version: number;
   private createdAt: number;

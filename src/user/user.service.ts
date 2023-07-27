@@ -34,6 +34,7 @@ export class UserService {
     if (!this.dbEngine.isAccess(user, updateUserDto.oldPassword))
       throw new ForbiddenException(ERROR_MSG.WRONG_PASSWORD);
     this.dbEngine.updateUser(user.id, updateUserDto);
+    return user;
   }
 
   remove(id: string) {

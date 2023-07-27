@@ -26,7 +26,9 @@ export default class DBEngine {
   }
 
   public async updateUser(userId: string, user: UpdateUserDto) {
-    this.existedUser(userId).update(user.newPassword);
+    const updateUser = this.existedUser(userId);
+    updateUser.update(this.hashPass(user.newPassword));
+    return updateUser;
   }
 
   public async deleteUser(userId: string) {
