@@ -122,7 +122,7 @@ export default class DBEngine {
     return updatedArtist;
   }
 
-  public deleteArtist(artistId: string) {
+  public async deleteArtist(artistId: string) {
     // TODO: need implement deletion artistId from track and album
     const idx = artistCollection.findIndex((artist) => artist.id === artistId);
     artistCollection.splice(idx);
@@ -153,7 +153,7 @@ export default class DBEngine {
     return updatedAlbum;
   }
 
-  public deleteAlbum(albumId: string) {
+  public async deleteAlbum(albumId: string) {
     // TODO: need implement deletion albumId from track
     const idx = albumCollection.findIndex((album) => album.id === albumId);
     albumCollection.splice(idx);
@@ -163,43 +163,46 @@ export default class DBEngine {
     return albumCollection.find((album) => album.id === albumId);
   }
 
-  public getFavs() {
+  public async getFavs() {
     return favsCollection;
   }
 
-  public addArtistToFavs(artistId: string) {
+  public async addArtistToFavs(artistId: string) {
     const artist = this.existedArtist(artistId);
     favsCollection.artists.push(artist);
   }
 
-  public removeArtistFromFav(artistId: string) {
+  public async removeArtistFromFav(artistId: string) {
     const idx = favsCollection.artists.findIndex(
       (artist) => artist.id === artistId,
     );
     favsCollection.artists.splice(idx);
+    return idx !== -1;
   }
 
-  public addAlbumToFavs(albumId: string) {
+  public async addAlbumToFavs(albumId: string) {
     const album = this.existedAlbum(albumId);
     favsCollection.albums.push(album);
   }
 
-  public removeAlbumFromFav(albumId: string) {
+  public async removeAlbumFromFav(albumId: string) {
     const idx = favsCollection.albums.findIndex(
       (album) => album.id === albumId,
     );
     favsCollection.albums.splice(idx);
+    return idx !== -1;
   }
 
-  public addTrackToFavs(trackId: string) {
+  public async addTrackToFavs(trackId: string) {
     const track = this.existedTrack(trackId);
     favsCollection.tracks.push(track);
   }
 
-  public removeTrackFromFav(trackId: string) {
+  public async removeTrackFromFav(trackId: string) {
     const idx = favsCollection.tracks.findIndex(
       (track) => track.id === trackId,
     );
     favsCollection.tracks.splice(idx);
+    return idx !== -1;
   }
 }

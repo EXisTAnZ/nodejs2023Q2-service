@@ -5,6 +5,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { FavsService } from './favs.service';
 
@@ -25,6 +26,7 @@ export class FavsController {
   }
 
   @Delete('artist/:id')
+  @HttpCode(204)
   removeArtist(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.favsService.removeArtistFromFavs(id);
   }
@@ -35,6 +37,7 @@ export class FavsController {
   }
 
   @Delete('album/:id')
+  @HttpCode(204)
   removeAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.favsService.removeAlbumFromFavs(id);
   }
@@ -45,6 +48,7 @@ export class FavsController {
   }
 
   @Delete('track/:id')
+  @HttpCode(204)
   removeTrack(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.favsService.removeTrackFromFavs(id);
   }
