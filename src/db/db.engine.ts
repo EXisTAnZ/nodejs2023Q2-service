@@ -1,11 +1,14 @@
 import { CreateTrackDto } from 'src/track/dto/create-track.dto';
-import { trackCollection, userCollection } from './db';
+import { artistCollection, trackCollection, userCollection } from './db';
 import { pbkdf2Sync } from 'crypto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { Track } from 'src/track/entities/track.entity';
 import { UpdateTrackDto } from 'src/track/dto/update-track.dto';
+import { CreateArtistDto } from 'src/artist/dto/create-artist.dto';
+import { Artist } from 'src/artist/entities/artist.entity';
+import { UpdateArtistDto } from 'src/artist/dto/update-artist.dto';
 
 export default class DBEngine {
   public async getUsers(): Promise<User[]> {
@@ -84,5 +87,38 @@ export default class DBEngine {
 
   public existedTrack(trackId: string) {
     return trackCollection.find((track) => track.id === trackId);
+  }
+
+  public async getArtists() {
+    return artistCollection;
+  }
+
+  public async getArtist(artistId: string) {
+    return artistCollection.find((artist) => artist.id === artistId);
+  }
+
+  public async addArtist(createArtistDto: CreateArtistDto) {
+    const newArtist = new Artist(createArtistDto);
+    artistCollection.push(newArtist);
+    return newArtist;
+  }
+
+  public async updateArtist(
+    artistId: string,
+    updateArtistDto: UpdateArtistDto,
+  ) {
+    const updatedArtist = this.existedArtist(artistId);
+    updatedArtist.name = updateArtistDto.name || updatedArtist.name;
+    updatedArtist.grammy = updateArtistDto.grammy || updatedArtist.grammy;
+    return updatedArtist;
+  }
+
+  public deleteArtist(artistId: string) {
+    const idx = artistCollection.findIndex((artist) => artist.id === artistId);
+    artistCollection.splice(idx);
+  }
+
+  public existedArtist(artistId: string) {
+    return artistCollection.find((artist) => artist.id === artistId);
   }
 }
