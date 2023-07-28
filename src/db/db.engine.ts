@@ -81,4 +81,8 @@ export default class DBEngine {
     const idx = trackCollection.findIndex((track) => track.id === trackId);
     trackCollection.splice(idx);
   }
+
+  public existedTrack(trackId: string) {
+    return trackCollection.find((track) => track.id === trackId);
+  }
 }

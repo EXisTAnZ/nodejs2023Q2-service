@@ -1,4 +1,10 @@
-import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateTrackDto {
   @IsString()
@@ -7,10 +13,12 @@ export class CreateTrackDto {
 
   @IsString()
   @IsUUID()
+  @IsOptional()
   artistId: string | null;
 
   @IsString()
   @IsUUID()
+  @IsOptional()
   albumId: string | null;
 
   @IsInt()
