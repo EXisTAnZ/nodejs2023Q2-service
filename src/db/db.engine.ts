@@ -2,6 +2,7 @@ import { CreateTrackDto } from 'src/track/dto/create-track.dto';
 import {
   albumCollection,
   artistCollection,
+  favsCollection,
   trackCollection,
   userCollection,
 } from './db';
@@ -160,5 +161,45 @@ export default class DBEngine {
 
   public existedAlbum(albumId: string) {
     return albumCollection.find((album) => album.id === albumId);
+  }
+
+  public getFavs() {
+    return favsCollection;
+  }
+
+  public addArtistToFavs(artistId: string) {
+    const artist = this.existedArtist(artistId);
+    favsCollection.artists.push(artist);
+  }
+
+  public removeArtistFromFav(artistId: string) {
+    const idx = favsCollection.artists.findIndex(
+      (artist) => artist.id === artistId,
+    );
+    favsCollection.artists.splice(idx);
+  }
+
+  public addAlbumToFavs(albumId: string) {
+    const album = this.existedAlbum(albumId);
+    favsCollection.albums.push(album);
+  }
+
+  public removeAlbumFromFav(albumId: string) {
+    const idx = favsCollection.albums.findIndex(
+      (album) => album.id === albumId,
+    );
+    favsCollection.albums.splice(idx);
+  }
+
+  public addTrackToFavs(trackId: string) {
+    const track = this.existedTrack(trackId);
+    favsCollection.tracks.push(track);
+  }
+
+  public removeTrackFromFav(trackId: string) {
+    const idx = favsCollection.tracks.findIndex(
+      (track) => track.id === trackId,
+    );
+    favsCollection.tracks.splice(idx);
   }
 }
