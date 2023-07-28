@@ -92,6 +92,7 @@ export default class DBEngine {
   public async deleteTrack(trackId: string) {
     const idx = trackCollection.findIndex((track) => track.id === trackId);
     trackCollection.splice(idx);
+    await this.removeTrackFromFav(trackId);
   }
 
   public existedTrack(trackId: string) {
@@ -123,14 +124,23 @@ export default class DBEngine {
   }
 
   public async deleteArtist(artistId: string) {
-    // TODO: need implement deletion artistId from track and album
     const idx = artistCollection.findIndex((artist) => artist.id === artistId);
     artistCollection.splice(idx);
+    const tracks = trackCollection.filter(
+      (track) => track.artistId === artistId,
+    );
+    tracks.every((track) => track.removeArtist());
+    const albums = albumCollection.filter(
+      (album) => album.artistId === artistId,
+    );
+    albums.every((album) => album.removeArtist());
+    await this.removeArtistFromFav(artistId);
   }
 
   public existedArtist(artistId: string) {
     return artistCollection.find((artist) => artist.id === artistId);
   }
+
   public async getAlbums() {
     return albumCollection;
   }
@@ -154,9 +164,11 @@ export default class DBEngine {
   }
 
   public async deleteAlbum(albumId: string) {
-    // TODO: need implement deletion albumId from track
     const idx = albumCollection.findIndex((album) => album.id === albumId);
     albumCollection.splice(idx);
+    const tracks = trackCollection.filter((track) => track.albumId === albumId);
+    tracks.every((track) => track.removeAlbum());
+    await this.removeAlbumFromFav(albumId);
   }
 
   public existedAlbum(albumId: string) {
