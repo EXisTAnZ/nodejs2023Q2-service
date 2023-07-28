@@ -12,15 +12,15 @@ export class ArtistService {
     return `This action returns all artist`;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} artist`;
   }
 
-  update(id: number, updateArtistDto: UpdateArtistDto) {
+  update(id: string, updateArtistDto: UpdateArtistDto) {
     return `This action updates a #${id} artist`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} artist`;
   }
 }
