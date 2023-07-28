@@ -1,5 +1,10 @@
 import { CreateTrackDto } from 'src/track/dto/create-track.dto';
-import { artistCollection, trackCollection, userCollection } from './db';
+import {
+  albumCollection,
+  artistCollection,
+  trackCollection,
+  userCollection,
+} from './db';
 import { pbkdf2Sync } from 'crypto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UpdateUserDto } from 'src/user/dto/update-user.dto';
@@ -9,6 +14,9 @@ import { UpdateTrackDto } from 'src/track/dto/update-track.dto';
 import { CreateArtistDto } from 'src/artist/dto/create-artist.dto';
 import { Artist } from 'src/artist/entities/artist.entity';
 import { UpdateArtistDto } from 'src/artist/dto/update-artist.dto';
+import { Album } from 'src/album/entities/album.entity';
+import { UpdateAlbumDto } from 'src/album/dto/update-album.dto';
+import { CreateAlbumDto } from 'src/album/dto/create-album.dto';
 
 export default class DBEngine {
   public async getUsers(): Promise<User[]> {
@@ -121,5 +129,36 @@ export default class DBEngine {
 
   public existedArtist(artistId: string) {
     return artistCollection.find((artist) => artist.id === artistId);
+  }
+  public async getAlbums() {
+    return albumCollection;
+  }
+
+  public async getAlbum(albumId: string) {
+    return albumCollection.find((album) => album.id === albumId);
+  }
+
+  public async addAlbum(createAlbumDto: CreateAlbumDto) {
+    const newAlbum = new Album(createAlbumDto);
+    albumCollection.push(newAlbum);
+    return newAlbum;
+  }
+
+  public async updateAlbum(albumId: string, updateAlbumDto: UpdateAlbumDto) {
+    const updatedAlbum = this.existedAlbum(albumId);
+    updatedAlbum.name = updateAlbumDto.name || updatedAlbum.name;
+    updatedAlbum.year = updateAlbumDto.year || updatedAlbum.year;
+    updatedAlbum.artistId = updateAlbumDto.artistId || updatedAlbum.artistId;
+    return updatedAlbum;
+  }
+
+  public deleteAlbum(albumId: string) {
+    // TODO: need implement deletion albumId from track
+    const idx = albumCollection.findIndex((album) => album.id === albumId);
+    albumCollection.splice(idx);
+  }
+
+  public existedAlbum(albumId: string) {
+    return albumCollection.find((album) => album.id === albumId);
   }
 }
