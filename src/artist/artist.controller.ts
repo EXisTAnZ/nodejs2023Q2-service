@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   ParseUUIDPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { ArtistService } from './artist.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
@@ -44,6 +45,7 @@ export class ArtistController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.artistService.remove(id);
   }

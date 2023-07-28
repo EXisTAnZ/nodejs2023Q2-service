@@ -109,11 +109,12 @@ export default class DBEngine {
   ) {
     const updatedArtist = this.existedArtist(artistId);
     updatedArtist.name = updateArtistDto.name || updatedArtist.name;
-    updatedArtist.grammy = updateArtistDto.grammy || updatedArtist.grammy;
+    updatedArtist.grammy = updateArtistDto.grammy ?? updatedArtist.grammy;
     return updatedArtist;
   }
 
   public deleteArtist(artistId: string) {
+    // TODO: need implement deletion artistId from track and album
     const idx = artistCollection.findIndex((artist) => artist.id === artistId);
     artistCollection.splice(idx);
   }
