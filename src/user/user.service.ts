@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePasswordDto } from './dto/update-user.dto';
 import DBEngine from 'src/db/db.engine';
 import { ERROR_MSG } from 'src/utils/constants';
 
@@ -28,7 +28,7 @@ export class UserService {
     return user;
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
+  update(id: string, updateUserDto: UpdatePasswordDto) {
     const user = this.dbEngine.existedUser(id);
     if (!user) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
     if (!this.dbEngine.isAccess(user, updateUserDto.oldPassword))

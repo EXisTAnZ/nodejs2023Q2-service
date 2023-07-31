@@ -8,7 +8,7 @@ import {
 } from './db';
 import { pbkdf2Sync } from 'crypto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { UpdateUserDto } from 'src/user/dto/update-user.dto';
+import { UpdatePasswordDto } from 'src/user/dto/update-user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { Track } from 'src/track/entities/track.entity';
 import { UpdateTrackDto } from 'src/track/dto/update-track.dto';
@@ -39,7 +39,7 @@ export default class DBEngine {
     }
   }
 
-  public async updateUser(userId: string, user: UpdateUserDto) {
+  public async updateUser(userId: string, user: UpdatePasswordDto) {
     const updateUser = this.existedUser(userId);
     updateUser.update(this.hashPass(user.newPassword));
     return updateUser;
