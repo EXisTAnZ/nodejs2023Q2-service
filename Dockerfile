@@ -1,5 +1,6 @@
-FROM node
+FROM node:alpine
 ADD . /app
+RUN mkdir -p /app/node_modules && chown -R node:node /app
 WORKDIR /app
 
 # COPY package.json and package-lock.json files
@@ -16,6 +17,8 @@ COPY tsconfig.json ./
 
 # COPY
 COPY . .
+
+RUN npm install -g npm@9.8.1
 
 RUN npm install
 
