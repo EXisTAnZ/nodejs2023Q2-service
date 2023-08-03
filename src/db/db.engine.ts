@@ -18,9 +18,18 @@ import { UpdateArtistDto } from 'src/artist/dto/update-artist.dto';
 import { Album } from 'src/album/entities/album.entity';
 import { UpdateAlbumDto } from 'src/album/dto/update-album.dto';
 import { CreateAlbumDto } from 'src/album/dto/create-album.dto';
+import { PrismaClient } from '@prisma/client';
 
 export default class DBEngine {
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
+
   public async getUsers(): Promise<User[]> {
+    const users = await this.prisma.user.findMany();
+    console.log('users in database: ', users);
     return userCollection;
   }
 
@@ -32,6 +41,7 @@ export default class DBEngine {
     const { login, password } = user;
     try {
       const newUser: User = new User(login, this.hashPass(password));
+      await this.prisma.user.create({ data: newUser });
       userCollection.push(newUser);
       return newUser;
     } catch (err) {

@@ -8,9 +8,9 @@ export class User {
   @Exclude()
   @ApiHideProperty()
   public password: string;
-  private version: number;
-  private createdAt: number;
-  private updatedAt: number;
+  public version: number;
+  public createdAt: number;
+  public updatedAt: number;
 
   constructor(login: string, password: string) {
     this.id = v4();

@@ -1,12 +1,46 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-model Todo {
-  id Int @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  title String
-  description String?
-  completed Boolean @default(false)
+
+model User {
+  id        String @id
+  login     String
+  password  String
+  version   Int
+  createdAt Int
+  updatedAt Int
+}
+
+model Track {
+  id       String  @id
+  name     String
+  artistId String?
+  albumId  String?
+  duration Int
+}
+
+model Artist {
+  id     String  @id
+  name   String
+  grammy Boolean
+}
+
+model Album {
+  id       String  @id
+  name     String
+  year     Float
+  artistId String?
+}
+
+model Favorites {
+  favoritesId String   @id
+  artists     String[]
+  albums      String[]
+  tracks      String[]
 }
