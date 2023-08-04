@@ -19,6 +19,8 @@ import { Album } from 'src/album/entities/album.entity';
 import { UpdateAlbumDto } from 'src/album/dto/update-album.dto';
 import { CreateAlbumDto } from 'src/album/dto/create-album.dto';
 import { PrismaClient } from '@prisma/client';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ERROR_MSG } from 'src/utils/constants';
 
 export default class DBEngine {
   private prisma: PrismaClient;
@@ -27,14 +29,19 @@ export default class DBEngine {
     this.prisma = new PrismaClient();
   }
 
-  public async getUsers(): Promise<User[]> {
-    const users = await this.prisma.user.findMany();
-    console.log('users in database: ', users);
-    return userCollection;
+  public async getUsers() {
+    const users = (await this.prisma.user.findMany()) as Array<User>;
+    return users;
   }
 
   public async getUser(userId: string) {
-    return userCollection.find((item) => item.id === userId);
+    const user: User = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    return user;
   }
 
   public async addUser(user: CreateUserDto) {
@@ -42,7 +49,6 @@ export default class DBEngine {
     try {
       const newUser: User = new User(login, this.hashPass(password));
       await this.prisma.user.create({ data: newUser });
-      userCollection.push(newUser);
       return newUser;
     } catch (err) {
       console.log(err.message);
@@ -50,14 +56,27 @@ export default class DBEngine {
   }
 
   public async updateUser(userId: string, user: UpdatePasswordDto) {
-    const updateUser = this.existedUser(userId);
-    updateUser.update(this.hashPass(user.newPassword));
+    const updateUser = await this.getUser(userId);
+    if (!updateUser) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    if (!this.isAccess(updateUser, user.oldPassword))
+      throw new ForbiddenException(ERROR_MSG.WRONG_PASSWORD);
+    updateUser.password = this.hashPass(user.newPassword);
+    updateUser.version++;
+    updateUser.updatedAt = new Date().getTime();
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: updateUser,
+    });
+    delete updateUser.password;
     return updateUser;
   }
 
   public async deleteUser(userId: string) {
-    const idx = userCollection.findIndex((user) => user.id === userId);
-    userCollection.splice(idx);
+    const delUser = await this.getUser(userId);
+    if (!delUser) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
   }
 
   public existedLogin(login: string) {

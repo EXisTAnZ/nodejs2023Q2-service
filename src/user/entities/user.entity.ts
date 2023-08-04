@@ -20,10 +20,4 @@ export class User {
     this.createdAt = new Date().getTime();
     this.updatedAt = new Date().getTime();
   }
-
-  public update(newPassword: string) {
-    this.password = newPassword;
-    this.version++;
-    this.updatedAt = new Date().getTime();
-  }
 }
