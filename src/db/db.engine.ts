@@ -143,16 +143,22 @@ export default class DBEngine {
   }
 
   public async getArtists() {
-    return artistCollection;
+    return (await this.prisma.artist.findMany()) as Array<Artist>;
   }
 
   public async getArtist(artistId: string) {
-    return artistCollection.find((artist) => artist.id === artistId);
+    const artist: Artist = await this.prisma.artist.findUnique({
+      where: {
+        id: artistId,
+      },
+    });
+    if (!artist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
+    return artist;
   }
 
   public async addArtist(createArtistDto: CreateArtistDto) {
     const newArtist = new Artist(createArtistDto);
-    artistCollection.push(newArtist);
+    await this.prisma.artist.create({ data: newArtist });
     return newArtist;
   }
 
@@ -160,20 +166,20 @@ export default class DBEngine {
     artistId: string,
     updateArtistDto: UpdateArtistDto,
   ) {
-    const updatedArtist = this.existedArtist(artistId);
+    const updatedArtist = await this.getArtist(artistId);
+    if (!updatedArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
     updatedArtist.name = updateArtistDto.name || updatedArtist.name;
     updatedArtist.grammy = updateArtistDto.grammy ?? updatedArtist.grammy;
+    this.prisma.artist.update({ where: { id: artistId }, data: updatedArtist });
     return updatedArtist;
   }
 
   public async deleteArtist(artistId: string) {
-    const idx = artistCollection.findIndex((artist) => artist.id === artistId);
-    artistCollection.splice(idx);
-    const albums = albumCollection.filter(
-      (album) => album.artistId === artistId,
-    );
-    albums.every((album) => album.removeArtist());
-    await this.removeArtistFromFav(artistId);
+    const delArtist = await this.getArtist(artistId);
+    if (!delArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
+    // TODO: need implement remove from albums
+    // TODO: need implement remove from tracks
+    // TODO: need implement remove from favs
   }
 
   public existedArtist(artistId: string) {
