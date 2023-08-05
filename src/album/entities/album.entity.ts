@@ -13,8 +13,4 @@ export class Album {
     this.year = createAlbumDto.year;
     this.artistId = createAlbumDto.artistId;
   }
-
-  public removeArtist() {
-    this.artistId = null;
-  }
 }

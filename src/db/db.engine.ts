@@ -187,21 +187,28 @@ export default class DBEngine {
   }
 
   public async getAlbums() {
-    return albumCollection;
+    return (await this.prisma.album.findMany()) as Array<Album>;
   }
 
   public async getAlbum(albumId: string) {
-    return albumCollection.find((album) => album.id === albumId);
+    const album: Album = await this.prisma.album.findUnique({
+      where: {
+        id: albumId,
+      },
+    });
+    if (!album) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
+    return album;
   }
 
   public async addAlbum(createAlbumDto: CreateAlbumDto) {
     const newAlbum = new Album(createAlbumDto);
-    albumCollection.push(newAlbum);
+    await this.prisma.album.create({ data: newAlbum });
     return newAlbum;
   }
 
   public async updateAlbum(albumId: string, updateAlbumDto: UpdateAlbumDto) {
-    const updatedAlbum = this.existedAlbum(albumId);
+    const updatedAlbum = await this.getAlbum(albumId);
+    if (!updatedAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
     updatedAlbum.name = updateAlbumDto.name || updatedAlbum.name;
     updatedAlbum.year = updateAlbumDto.year || updatedAlbum.year;
     updatedAlbum.artistId = updateAlbumDto.artistId || updatedAlbum.artistId;
@@ -209,9 +216,11 @@ export default class DBEngine {
   }
 
   public async deleteAlbum(albumId: string) {
-    const idx = albumCollection.findIndex((album) => album.id === albumId);
-    albumCollection.splice(idx);
+    const delAlbum = await this.getAlbum(albumId);
+    if (!delAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
     await this.removeAlbumFromFav(albumId);
+    // TODO: need implement remove from tracks
+    // TODO: need implement remove from favs
   }
 
   public existedAlbum(albumId: string) {
