@@ -96,31 +96,45 @@ export default class DBEngine {
   }
 
   public async getTracks() {
-    return trackCollection;
+    return (await this.prisma.track.findMany()) as Array<Track>;
   }
 
   public async getTrack(trackId: string) {
-    return trackCollection.find((track) => track.id === trackId);
+    const track: Track = await this.prisma.track.findUnique({
+      where: {
+        id: trackId,
+      },
+    });
+    if (!track) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
+    return track;
   }
 
   public async addTrack(track: CreateTrackDto) {
     const newTrack = new Track(track);
-    trackCollection.push(newTrack);
+    await this.prisma.track.create({ data: newTrack });
     return newTrack;
   }
 
   public async updateTrack(trackId: string, track: UpdateTrackDto) {
     const updatedTrack = await this.getTrack(trackId);
+    if (!updatedTrack) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
     updatedTrack.name = track.name || updatedTrack.name;
     updatedTrack.albumId = track.albumId || updatedTrack.albumId;
     updatedTrack.artistId = track.artistId || updatedTrack.artistId;
     updatedTrack.duration = track.duration || updatedTrack.duration;
+    await this.prisma.track.update({
+      where: {
+        id: trackId,
+      },
+      data: updatedTrack,
+    });
     return updatedTrack;
   }
 
   public async deleteTrack(trackId: string) {
-    const idx = trackCollection.findIndex((track) => track.id === trackId);
-    trackCollection.splice(idx);
+    const delTrack = await this.getTrack(trackId);
+    if (!delTrack) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
+    await this.prisma.track.delete({ where: { id: trackId } });
     await this.removeTrackFromFav(trackId);
   }
 
@@ -155,10 +169,6 @@ export default class DBEngine {
   public async deleteArtist(artistId: string) {
     const idx = artistCollection.findIndex((artist) => artist.id === artistId);
     artistCollection.splice(idx);
-    const tracks = trackCollection.filter(
-      (track) => track.artistId === artistId,
-    );
-    tracks.every((track) => track.removeArtist());
     const albums = albumCollection.filter(
       (album) => album.artistId === artistId,
     );
@@ -195,8 +205,6 @@ export default class DBEngine {
   public async deleteAlbum(albumId: string) {
     const idx = albumCollection.findIndex((album) => album.id === albumId);
     albumCollection.splice(idx);
-    const tracks = trackCollection.filter((track) => track.albumId === albumId);
-    tracks.every((track) => track.removeAlbum());
     await this.removeAlbumFromFav(albumId);
   }
 
