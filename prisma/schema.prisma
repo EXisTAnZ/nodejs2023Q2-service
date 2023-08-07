@@ -23,12 +23,14 @@ model Track {
   artistId String?
   albumId  String?
   duration Int
+  fav Boolean?
 }
 
 model Artist {
   id     String  @id
   name   String
   grammy Boolean
+  fav Boolean?
 }
 
 model Album {
@@ -36,11 +38,5 @@ model Album {
   name     String
   year     Float
   artistId String?
-}
-
-model Favorites {
-  favoritesId String   @id
-  artists     String[]
-  albums      String[]
-  tracks      String[]
+  fav Boolean?
 }

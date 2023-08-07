@@ -2,7 +2,6 @@ import { CreateTrackDto } from 'src/track/dto/create-track.dto';
 import {
   albumCollection,
   artistCollection,
-  favsCollection,
   trackCollection,
   userCollection,
 } from './db';
@@ -19,8 +18,13 @@ import { Album } from 'src/album/entities/album.entity';
 import { UpdateAlbumDto } from 'src/album/dto/update-album.dto';
 import { CreateAlbumDto } from 'src/album/dto/create-album.dto';
 import { PrismaClient } from '@prisma/client';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ERROR_MSG } from 'src/utils/constants';
+import { Favs } from 'src/favs/entities/favs.entity';
 
 export default class DBEngine {
   private prisma: PrismaClient;
@@ -228,45 +232,87 @@ export default class DBEngine {
   }
 
   public async getFavs() {
-    return favsCollection;
+    const artists = await this.prisma.artist.findMany({
+      where: { fav: true },
+    });
+    const albums = await this.prisma.album.findMany({
+      where: { fav: true },
+    });
+    const tracks = await this.prisma.track.findMany({
+      where: { fav: true },
+    });
+    return { artists, albums, tracks } as Favs;
   }
 
   public async addArtistToFavs(artistId: string) {
-    const artist = this.existedArtist(artistId);
-    favsCollection.artists.push(artist);
+    const artist = await this.getArtist(artistId);
+    if (!artist)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ARTIST);
+    await this.prisma.artist.update({
+      where: { id: artistId },
+      data: { fav: true },
+    });
   }
 
   public async removeArtistFromFav(artistId: string) {
-    const idx = favsCollection.artists.findIndex(
-      (artist) => artist.id === artistId,
-    );
-    favsCollection.artists.splice(idx);
-    return idx !== -1;
+    const artist = await this.prisma.artist.findUnique({
+      where: { id: artistId },
+    });
+    if (!artist)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ARTIST);
+    if (!artist.fav) throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+
+    await this.prisma.artist.update({
+      where: { id: artistId },
+      data: { fav: false },
+    });
   }
 
   public async addAlbumToFavs(albumId: string) {
-    const album = this.existedAlbum(albumId);
-    favsCollection.albums.push(album);
+    const album = await this.getAlbum(albumId);
+    if (!album)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ALBUM);
+    await this.prisma.album.update({
+      where: { id: albumId },
+      data: { fav: true },
+    });
   }
 
   public async removeAlbumFromFav(albumId: string) {
-    const idx = favsCollection.albums.findIndex(
-      (album) => album.id === albumId,
-    );
-    favsCollection.albums.splice(idx);
-    return idx !== -1;
+    const album = await this.prisma.album.findUnique({
+      where: { id: albumId },
+    });
+    if (!album)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ALBUM);
+    if (!album.fav) throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+
+    await this.prisma.album.update({
+      where: { id: albumId },
+      data: { fav: false },
+    });
   }
 
   public async addTrackToFavs(trackId: string) {
-    const track = this.existedTrack(trackId);
-    favsCollection.tracks.push(track);
+    const track = await this.getTrack(trackId);
+    if (!track)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_TRACK);
+    await this.prisma.track.update({
+      where: { id: trackId },
+      data: { fav: true },
+    });
   }
 
   public async removeTrackFromFav(trackId: string) {
-    const idx = favsCollection.tracks.findIndex(
-      (track) => track.id === trackId,
-    );
-    favsCollection.tracks.splice(idx);
-    return idx !== -1;
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+    });
+    if (!track)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_TRACK);
+    if (!track.fav) throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+
+    await this.prisma.track.update({
+      where: { id: trackId },
+      data: { fav: false },
+    });
   }
 }
