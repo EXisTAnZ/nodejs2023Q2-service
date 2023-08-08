@@ -241,6 +241,11 @@ export default class DBEngine {
 
   public async getFavs() {
     const favs = await this.prisma.favorites.findFirst();
+    if (!favs) {
+      const emptyFavs = { artists: [], albums: [], tracks: [] };
+      await this.prisma.favorites.create({ data: emptyFavs });
+      return emptyFavs as Favs;
+    }
     const artists = await this.prisma.artist.findMany({
       where: { id: { in: favs.artists } },
     });
