@@ -14,18 +14,6 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4:7.2
-    container_name: pgadmin
-    restart: always
-    ports:
-      - "5050:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: raj@nola.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    volumes:
-      - pgadmin-data:/var/lib/pgadmin
-
   nodejs2023q2-service:
     stdin_open: true
     build:
@@ -40,4 +28,3 @@ services:
 
 volumes:
   postgres-data:
-  pgadmin-data:
