@@ -1,29 +1,31 @@
-FROM node:alpine
-ADD . /app
-RUN mkdir -p /app/node_modules && chown -R node:node /app
+FROM node:18-alpine as dev
+
 WORKDIR /app
 
-# COPY package.json and package-lock.json files
-COPY package*.json ./
+COPY package.json ./
 
-# generated prisma files
-COPY prisma ./prisma/
+RUN npm install --only=development
 
-# COPY ENV variable
-COPY .env ./
-
-# COPY tsconfig.json file
-COPY tsconfig.json ./
-
-# COPY
 COPY . .
 
-RUN npm install -g npm@9.8.1
+RUN npm run build
 
-RUN npm install
+FROM node:18-alpine as prod
+
+WORKDIR /app
+
+COPY package.json ./
+
+RUN npm install --only=production
+
+COPY . . 
+
+COPY --from=dev /app/dist ./dist
+
+COPY . .
 
 RUN npx prisma generate
 
 EXPOSE 4000
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start:prod"]
