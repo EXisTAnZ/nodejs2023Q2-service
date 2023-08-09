@@ -127,9 +127,7 @@ export default class DBEngine {
     await this.prisma.track.delete({ where: { id: trackId } });
     try {
       await this.removeTrackFromFav(trackId);
-    } catch (err) {
-      console.log('not in favs');
-    }
+    } catch (err) {}
   }
 
   public async removeAlbumFromTrack(albumId: string) {
@@ -183,9 +181,7 @@ export default class DBEngine {
     if (!delArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
     try {
       await this.removeArtistFromFav(artistId);
-    } catch (err) {
-      console.log('not in favs');
-    }
+    } catch (err) {}
     await this.removeArtistFromTrack(artistId);
     await this.removeArtistFromAlbum(artistId);
     await this.prisma.artist.delete({ where: { id: artistId } });
@@ -225,9 +221,7 @@ export default class DBEngine {
     if (!delAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
     try {
       await this.removeAlbumFromFav(albumId);
-    } catch (err) {
-      console.log('not in favs');
-    }
+    } catch (err) {}
     await this.removeAlbumFromTrack(albumId);
     await this.prisma.album.delete({ where: { id: albumId } });
   }
