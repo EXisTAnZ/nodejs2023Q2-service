@@ -37,10 +37,10 @@ networks:
     ipam:
       driver: default
       config:
-      - subnet: 139.23.0.0/16
-        ip_range: 139.23.8.0/24
-        gateway: 139.23.8.254
+      - subnet: ${NET_SUBNET}
+        ip_range: ${NET_IP_RANGE}
+        gateway: ${NET_GATEWAY}
         aux_addresses:
-          postgres: 139.23.8.15
+          postgres: ${NET_POSTGRES_IP}
 volumes:
   postgres-data:
