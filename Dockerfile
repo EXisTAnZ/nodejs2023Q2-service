@@ -2,9 +2,9 @@ FROM node:18-alpine as dev
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package-dev.json ./package.json
 
-RUN npm install --only=development
+RUN npm install
 
 COPY . .
 
@@ -16,7 +16,7 @@ WORKDIR /app
 
 COPY package.json ./
 
-RUN npm install --only=production
+RUN npm install --only=prod
 
 COPY . . 
 
@@ -25,7 +25,5 @@ COPY --from=dev /app/dist ./dist
 COPY . .
 
 RUN npx prisma generate
-
-EXPOSE 4000
 
 CMD ["npm", "run", "start:prod"]

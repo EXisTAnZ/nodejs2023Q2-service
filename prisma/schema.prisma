@@ -18,29 +18,38 @@ model User {
 }
 
 model Track {
-  id       String  @id
-  name     String
-  artistId String?
-  albumId  String?
-  duration Int
+  id          String     @id
+  name        String
+  artist      Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  artistId    String?
+  album       Album?     @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  albumId     String?
+  duration    Int
+  Favorites   Favorites[]
 }
 
 model Artist {
-  id     String  @id
-  name   String
-  grammy Boolean
+  id          String     @id
+  name        String
+  grammy      Boolean
+  tracks      Track[]
+  albums      Album[]
+  Favorites   Favorites[]
 }
 
 model Album {
-  id       String  @id
-  name     String
-  year     Float
-  artistId String?
+  id          String     @id
+  name        String
+  year        Float
+  artist      Artist?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  artistId    String?
+  tracks      Track[]
+  Favorites   Favorites[]
 }
 
 model Favorites {
   id      Int      @id @default(autoincrement())
-  artists String[]
-  albums  String[]
-  tracks  String[]
+  artists Artist[]
+  albums  Album[]
+  tracks  Track[]
 }

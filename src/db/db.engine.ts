@@ -125,9 +125,6 @@ export default class DBEngine {
     const delTrack = await this.getTrack(trackId);
     if (!delTrack) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
     await this.prisma.track.delete({ where: { id: trackId } });
-    try {
-      await this.removeTrackFromFav(trackId);
-    } catch (err) {}
   }
 
   public async removeAlbumFromTrack(albumId: string) {
@@ -179,11 +176,6 @@ export default class DBEngine {
   public async deleteArtist(artistId: string) {
     const delArtist = await this.getArtist(artistId);
     if (!delArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
-    try {
-      await this.removeArtistFromFav(artistId);
-    } catch (err) {}
-    await this.removeArtistFromTrack(artistId);
-    await this.removeArtistFromAlbum(artistId);
     await this.prisma.artist.delete({ where: { id: artistId } });
   }
 
@@ -219,10 +211,6 @@ export default class DBEngine {
   public async deleteAlbum(albumId: string) {
     const delAlbum = await this.getAlbum(albumId);
     if (!delAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
-    try {
-      await this.removeAlbumFromFav(albumId);
-    } catch (err) {}
-    await this.removeAlbumFromTrack(albumId);
     await this.prisma.album.delete({ where: { id: albumId } });
   }
 
@@ -234,21 +222,17 @@ export default class DBEngine {
   }
 
   public async getFavs() {
-    const favs = await this.prisma.favorites.findFirst();
+    const favs = await this.prisma.favorites.findFirst({
+      include: { artists: true, albums: true, tracks: true },
+    });
     if (!favs) {
       const emptyFavs = { artists: [], albums: [], tracks: [] };
-      await this.prisma.favorites.create({ data: emptyFavs });
+      await this.prisma.favorites.create({ data: { id: 1 } });
       return emptyFavs as Favs;
     }
-    const artists = await this.prisma.artist.findMany({
-      where: { id: { in: favs.artists } },
-    });
-    const albums = await this.prisma.album.findMany({
-      where: { id: { in: favs.albums } },
-    });
-    const tracks = await this.prisma.track.findMany({
-      where: { id: { in: favs.tracks } },
-    });
+    const artists = favs.artists;
+    const albums = favs.albums;
+    const tracks = favs.tracks;
     return { artists, albums, tracks } as Favs;
   }
 
@@ -260,7 +244,7 @@ export default class DBEngine {
     }
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { artists: { push: artistId } },
+      data: { artists: { connect: { id: artistId } } },
     });
   }
 
@@ -270,12 +254,14 @@ export default class DBEngine {
     });
     if (!artist)
       throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ARTIST);
-    const favArtistsIds = (await this.prisma.favorites.findFirst()).artists;
-    if (!favArtistsIds.includes(artistId))
+    const favArtistsIds = (
+      await this.prisma.favorites.findFirst({ include: { artists: true } })
+    ).artists;
+    if (!favArtistsIds.find((artist) => artist.id === artistId))
       throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { artists: favArtistsIds.filter((id) => id !== artistId) },
+      data: { artists: { disconnect: { id: artistId } } },
     });
   }
 
@@ -287,7 +273,7 @@ export default class DBEngine {
     }
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { albums: { push: albumId } },
+      data: { albums: { connect: { id: albumId } } },
     });
   }
 
@@ -297,12 +283,14 @@ export default class DBEngine {
     });
     if (!album)
       throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ALBUM);
-    const favAlbumsIds = (await this.prisma.favorites.findFirst()).albums;
-    if (!favAlbumsIds.includes(albumId))
+    const favAlbumsIds = (
+      await this.prisma.favorites.findFirst({ include: { albums: true } })
+    ).albums;
+    if (!favAlbumsIds.find((album) => album.id === albumId))
       throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { albums: favAlbumsIds.filter((id) => id !== albumId) },
+      data: { albums: { disconnect: { id: albumId } } },
     });
   }
 
@@ -314,7 +302,7 @@ export default class DBEngine {
     }
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { tracks: { push: trackId } },
+      data: { tracks: { connect: { id: trackId } } },
     });
   }
 
@@ -324,12 +312,14 @@ export default class DBEngine {
     });
     if (!track)
       throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_TRACK);
-    const favTracksIds = (await this.prisma.favorites.findFirst()).tracks;
-    if (!favTracksIds.includes(trackId))
+    const favTracksIds = (
+      await this.prisma.favorites.findFirst({ include: { tracks: true } })
+    ).tracks;
+    if (!favTracksIds.find((track) => track.id === trackId))
       throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
     await this.prisma.favorites.update({
       where: { id: 1 },
-      data: { tracks: favTracksIds.filter((id) => id !== trackId) },
+      data: { tracks: { disconnect: { id: trackId } } },
     });
   }
 }
