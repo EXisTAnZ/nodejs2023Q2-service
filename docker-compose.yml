@@ -4,8 +4,10 @@ services:
     image: postgres:latest
     container_name: postgres
     hostname: postgres
+    networks:
+      - hls-network
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -22,9 +24,23 @@ services:
     container_name: nodejs2023q2-service
     depends_on:
       - postgres
+    networks:
+      - hls-network
     ports:
-      - "4000:4000"
+      - ${PORT}:${PORT}
     restart: always
 
+networks:
+  hls-network:
+    name: hls-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 139.23.0.0/16
+        ip_range: 139.23.8.0/24
+        gateway: 139.23.8.254
+        aux_addresses:
+          postgres: 139.23.8.15
 volumes:
   postgres-data:
