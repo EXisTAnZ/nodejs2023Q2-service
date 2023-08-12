@@ -16,12 +16,13 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  nodejs2023q2-service:
+  app:
+    image: existanz/hl-service
     stdin_open: true
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nodejs2023q2-service
+    container_name: hl-service
     depends_on:
       - postgres
     networks:
