@@ -5,27 +5,21 @@ RS School NodeJS course final task
 
 - Git - [Download & Install Git](https://git-scm.com/downloads).
 - Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package manager.
+- Docker - [Download $ Install Docker](https://docs.docker.com/engine/install/)
 
 ## Downloading
 
 ```
 git clone https://github.com/existanz/nodejs2023Q2-service.git
 ```
-change branch to develop
+change branch to task2
 ```
-git checkout develop
+git checkout task2
 ```
-
-## Installing NPM modules
-
-```
-npm install
-```
-
-## Running application
+## Start application from docker image
 
 ```
-npm run start
+docker-compose up
 ```
 
 After starting the app on port (4000 as default) you can open
@@ -58,6 +52,11 @@ To run only specific test suite with authorization
 
 ```
 npm run test:auth -- <path to suite>
+```
+
+## Scan image for vulnerabilities
+```
+npm run scout
 ```
 
 ## Auto-fix and format
