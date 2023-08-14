@@ -2,9 +2,9 @@ FROM node:alpine as dev
 
 WORKDIR /app
 
-COPY package-dev.json ./package.json
+COPY prisma package*.json ./
 
-RUN npm install
+RUN npm install && npx prisma generate
 
 COPY . .
 
@@ -12,18 +12,13 @@ RUN npm run build
 
 FROM node:alpine as prod
 
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}}
+
 WORKDIR /app
 
-COPY package.json ./
+COPY --from=dev /app .
 
-RUN npm install --only=prod
+EXPOSE ${PORT}
 
-COPY . . 
-
-COPY --from=dev /app/dist ./dist
-
-COPY . .
-
-RUN npx prisma generate
-
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start:dev"]

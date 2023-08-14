@@ -29,7 +29,9 @@ services:
       - hls-network
     ports:
       - ${PORT}:${PORT}
-    restart: always
+    volumes:
+      - ./src:/app/src
+    restart: on-failure
 
 networks:
   hls-network:
