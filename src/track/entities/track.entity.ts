@@ -15,12 +15,4 @@ export class Track {
     this.albumId = createTrackDto.albumId;
     this.duration = createTrackDto.duration;
   }
-
-  public removeArtist() {
-    this.artistId = null;
-  }
-
-  public removeAlbum() {
-    this.albumId = null;
-  }
 }

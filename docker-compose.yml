@@ -1,0 +1,49 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    hostname: postgres
+    networks:
+      - hls-network
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    image: existanz/hl-service
+    stdin_open: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hl-service
+    depends_on:
+      - postgres
+    networks:
+      - hls-network
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+      - ./src:/app/src
+    restart: on-failure
+
+networks:
+  hls-network:
+    name: hls-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: ${NET_SUBNET}
+        ip_range: ${NET_IP_RANGE}
+        gateway: ${NET_GATEWAY}
+        aux_addresses:
+          postgres: ${NET_POSTGRES_IP}
+volumes:
+  postgres-data:

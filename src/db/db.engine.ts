@@ -1,11 +1,4 @@
 import { CreateTrackDto } from 'src/track/dto/create-track.dto';
-import {
-  albumCollection,
-  artistCollection,
-  favsCollection,
-  trackCollection,
-  userCollection,
-} from './db';
 import { pbkdf2Sync } from 'crypto';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UpdatePasswordDto } from 'src/user/dto/update-user.dto';
@@ -18,21 +11,42 @@ import { UpdateArtistDto } from 'src/artist/dto/update-artist.dto';
 import { Album } from 'src/album/entities/album.entity';
 import { UpdateAlbumDto } from 'src/album/dto/update-album.dto';
 import { CreateAlbumDto } from 'src/album/dto/create-album.dto';
+import { PrismaClient } from '@prisma/client';
+import {
+  ForbiddenException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { ERROR_MSG } from 'src/utils/constants';
+import { Favs } from 'src/favs/entities/favs.entity';
 
 export default class DBEngine {
-  public async getUsers(): Promise<User[]> {
-    return userCollection;
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = new PrismaClient();
+  }
+
+  public async getUsers() {
+    const users = (await this.prisma.user.findMany()) as Array<User>;
+    return users;
   }
 
   public async getUser(userId: string) {
-    return userCollection.find((item) => item.id === userId);
+    const user: User = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    return user;
   }
 
   public async addUser(user: CreateUserDto) {
     const { login, password } = user;
     try {
       const newUser: User = new User(login, this.hashPass(password));
-      userCollection.push(newUser);
+      await this.prisma.user.create({ data: newUser });
       return newUser;
     } catch (err) {
       console.log(err.message);
@@ -40,22 +54,27 @@ export default class DBEngine {
   }
 
   public async updateUser(userId: string, user: UpdatePasswordDto) {
-    const updateUser = this.existedUser(userId);
-    updateUser.update(this.hashPass(user.newPassword));
+    const updateUser = await this.getUser(userId);
+    if (!updateUser) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    if (!this.isAccess(updateUser, user.oldPassword))
+      throw new ForbiddenException(ERROR_MSG.WRONG_PASSWORD);
+    updateUser.password = this.hashPass(user.newPassword);
+    updateUser.version++;
+    updateUser.updatedAt = new Date().getTime();
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: updateUser,
+    });
+    delete updateUser.password;
     return updateUser;
   }
 
   public async deleteUser(userId: string) {
-    const idx = userCollection.findIndex((user) => user.id === userId);
-    userCollection.splice(idx);
-  }
-
-  public existedLogin(login: string) {
-    return userCollection.find((user) => user.login === login);
-  }
-
-  public existedUser(userId: string) {
-    return userCollection.find((user) => user.id === userId);
+    const delUser = await this.getUser(userId);
+    if (!delUser) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
   }
 
   public isAccess(user: User, password: string) {
@@ -67,49 +86,78 @@ export default class DBEngine {
   }
 
   public async getTracks() {
-    return trackCollection;
+    return (await this.prisma.track.findMany()) as Array<Track>;
   }
 
   public async getTrack(trackId: string) {
-    return trackCollection.find((track) => track.id === trackId);
+    const track: Track = await this.prisma.track.findUnique({
+      where: {
+        id: trackId,
+      },
+    });
+    if (!track) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
+    return track;
   }
 
   public async addTrack(track: CreateTrackDto) {
     const newTrack = new Track(track);
-    trackCollection.push(newTrack);
+    await this.prisma.track.create({ data: newTrack });
     return newTrack;
   }
 
   public async updateTrack(trackId: string, track: UpdateTrackDto) {
     const updatedTrack = await this.getTrack(trackId);
+    if (!updatedTrack) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
     updatedTrack.name = track.name || updatedTrack.name;
     updatedTrack.albumId = track.albumId || updatedTrack.albumId;
     updatedTrack.artistId = track.artistId || updatedTrack.artistId;
     updatedTrack.duration = track.duration || updatedTrack.duration;
+    await this.prisma.track.update({
+      where: {
+        id: trackId,
+      },
+      data: updatedTrack,
+    });
     return updatedTrack;
   }
 
   public async deleteTrack(trackId: string) {
-    const idx = trackCollection.findIndex((track) => track.id === trackId);
-    trackCollection.splice(idx);
-    await this.removeTrackFromFav(trackId);
+    const delTrack = await this.getTrack(trackId);
+    if (!delTrack) throw new NotFoundException(ERROR_MSG.NOT_FOUND_TRACK);
+    await this.prisma.track.delete({ where: { id: trackId } });
   }
 
-  public existedTrack(trackId: string) {
-    return trackCollection.find((track) => track.id === trackId);
+  public async removeAlbumFromTrack(albumId: string) {
+    await this.prisma.track.updateMany({
+      where: { albumId: albumId },
+      data: { albumId: null },
+    });
+  }
+
+  public async removeArtistFromTrack(artistId: string) {
+    await this.prisma.track.updateMany({
+      where: { artistId: artistId },
+      data: { artistId: null },
+    });
   }
 
   public async getArtists() {
-    return artistCollection;
+    return (await this.prisma.artist.findMany()) as Array<Artist>;
   }
 
   public async getArtist(artistId: string) {
-    return artistCollection.find((artist) => artist.id === artistId);
+    const artist: Artist = await this.prisma.artist.findUnique({
+      where: {
+        id: artistId,
+      },
+    });
+    if (!artist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
+    return artist;
   }
 
   public async addArtist(createArtistDto: CreateArtistDto) {
     const newArtist = new Artist(createArtistDto);
-    artistCollection.push(newArtist);
+    await this.prisma.artist.create({ data: newArtist });
     return newArtist;
   }
 
@@ -117,46 +165,43 @@ export default class DBEngine {
     artistId: string,
     updateArtistDto: UpdateArtistDto,
   ) {
-    const updatedArtist = this.existedArtist(artistId);
+    const updatedArtist = await this.getArtist(artistId);
+    if (!updatedArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
     updatedArtist.name = updateArtistDto.name || updatedArtist.name;
     updatedArtist.grammy = updateArtistDto.grammy ?? updatedArtist.grammy;
+    this.prisma.artist.update({ where: { id: artistId }, data: updatedArtist });
     return updatedArtist;
   }
 
   public async deleteArtist(artistId: string) {
-    const idx = artistCollection.findIndex((artist) => artist.id === artistId);
-    artistCollection.splice(idx);
-    const tracks = trackCollection.filter(
-      (track) => track.artistId === artistId,
-    );
-    tracks.every((track) => track.removeArtist());
-    const albums = albumCollection.filter(
-      (album) => album.artistId === artistId,
-    );
-    albums.every((album) => album.removeArtist());
-    await this.removeArtistFromFav(artistId);
-  }
-
-  public existedArtist(artistId: string) {
-    return artistCollection.find((artist) => artist.id === artistId);
+    const delArtist = await this.getArtist(artistId);
+    if (!delArtist) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ARTIST);
+    await this.prisma.artist.delete({ where: { id: artistId } });
   }
 
   public async getAlbums() {
-    return albumCollection;
+    return (await this.prisma.album.findMany()) as Array<Album>;
   }
 
   public async getAlbum(albumId: string) {
-    return albumCollection.find((album) => album.id === albumId);
+    const album: Album = await this.prisma.album.findUnique({
+      where: {
+        id: albumId,
+      },
+    });
+    if (!album) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
+    return album;
   }
 
   public async addAlbum(createAlbumDto: CreateAlbumDto) {
     const newAlbum = new Album(createAlbumDto);
-    albumCollection.push(newAlbum);
+    await this.prisma.album.create({ data: newAlbum });
     return newAlbum;
   }
 
   public async updateAlbum(albumId: string, updateAlbumDto: UpdateAlbumDto) {
-    const updatedAlbum = this.existedAlbum(albumId);
+    const updatedAlbum = await this.getAlbum(albumId);
+    if (!updatedAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
     updatedAlbum.name = updateAlbumDto.name || updatedAlbum.name;
     updatedAlbum.year = updateAlbumDto.year || updatedAlbum.year;
     updatedAlbum.artistId = updateAlbumDto.artistId || updatedAlbum.artistId;
@@ -164,57 +209,117 @@ export default class DBEngine {
   }
 
   public async deleteAlbum(albumId: string) {
-    const idx = albumCollection.findIndex((album) => album.id === albumId);
-    albumCollection.splice(idx);
-    const tracks = trackCollection.filter((track) => track.albumId === albumId);
-    tracks.every((track) => track.removeAlbum());
-    await this.removeAlbumFromFav(albumId);
+    const delAlbum = await this.getAlbum(albumId);
+    if (!delAlbum) throw new NotFoundException(ERROR_MSG.NOT_FOUND_ALBUM);
+    await this.prisma.album.delete({ where: { id: albumId } });
   }
 
-  public existedAlbum(albumId: string) {
-    return albumCollection.find((album) => album.id === albumId);
+  public async removeArtistFromAlbum(artistId: string) {
+    await this.prisma.album.updateMany({
+      where: { artistId: artistId },
+      data: { artistId: null },
+    });
   }
 
   public async getFavs() {
-    return favsCollection;
+    const favs = await this.prisma.favorites.findFirst({
+      include: { artists: true, albums: true, tracks: true },
+    });
+    if (!favs) {
+      const emptyFavs = { artists: [], albums: [], tracks: [] };
+      await this.prisma.favorites.create({ data: { id: 1 } });
+      return emptyFavs as Favs;
+    }
+    const artists = favs.artists;
+    const albums = favs.albums;
+    const tracks = favs.tracks;
+    return { artists, albums, tracks } as Favs;
   }
 
   public async addArtistToFavs(artistId: string) {
-    const artist = this.existedArtist(artistId);
-    favsCollection.artists.push(artist);
+    try {
+      await this.getArtist(artistId);
+    } catch (err) {
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ARTIST);
+    }
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { artists: { connect: { id: artistId } } },
+    });
   }
 
   public async removeArtistFromFav(artistId: string) {
-    const idx = favsCollection.artists.findIndex(
-      (artist) => artist.id === artistId,
-    );
-    favsCollection.artists.splice(idx);
-    return idx !== -1;
+    const artist = await this.prisma.artist.findUnique({
+      where: { id: artistId },
+    });
+    if (!artist)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ARTIST);
+    const favArtistsIds = (
+      await this.prisma.favorites.findFirst({ include: { artists: true } })
+    ).artists;
+    if (!favArtistsIds.find((artist) => artist.id === artistId))
+      throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { artists: { disconnect: { id: artistId } } },
+    });
   }
 
   public async addAlbumToFavs(albumId: string) {
-    const album = this.existedAlbum(albumId);
-    favsCollection.albums.push(album);
+    try {
+      await this.getAlbum(albumId);
+    } catch (err) {
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ALBUM);
+    }
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { albums: { connect: { id: albumId } } },
+    });
   }
 
   public async removeAlbumFromFav(albumId: string) {
-    const idx = favsCollection.albums.findIndex(
-      (album) => album.id === albumId,
-    );
-    favsCollection.albums.splice(idx);
-    return idx !== -1;
+    const album = await this.prisma.album.findUnique({
+      where: { id: albumId },
+    });
+    if (!album)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_ALBUM);
+    const favAlbumsIds = (
+      await this.prisma.favorites.findFirst({ include: { albums: true } })
+    ).albums;
+    if (!favAlbumsIds.find((album) => album.id === albumId))
+      throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { albums: { disconnect: { id: albumId } } },
+    });
   }
 
   public async addTrackToFavs(trackId: string) {
-    const track = this.existedTrack(trackId);
-    favsCollection.tracks.push(track);
+    try {
+      await this.getTrack(trackId);
+    } catch (err) {
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_TRACK);
+    }
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { tracks: { connect: { id: trackId } } },
+    });
   }
 
   public async removeTrackFromFav(trackId: string) {
-    const idx = favsCollection.tracks.findIndex(
-      (track) => track.id === trackId,
-    );
-    favsCollection.tracks.splice(idx);
-    return idx !== -1;
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+    });
+    if (!track)
+      throw new UnprocessableEntityException(ERROR_MSG.NOT_FOUND_TRACK);
+    const favTracksIds = (
+      await this.prisma.favorites.findFirst({ include: { tracks: true } })
+    ).tracks;
+    if (!favTracksIds.find((track) => track.id === trackId))
+      throw new NotFoundException(ERROR_MSG.NOT_FOUND_IN_FAVS);
+    await this.prisma.favorites.update({
+      where: { id: 1 },
+      data: { tracks: { disconnect: { id: trackId } } },
+    });
   }
 }
