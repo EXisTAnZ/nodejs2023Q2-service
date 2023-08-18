@@ -8,6 +8,7 @@ export enum ERROR_MSG {
   NOT_FOUND_ARTIST = 'Not found artist with this UUID',
   NOT_FOUND_ALBUM = 'Not found album with this UUID',
   NOT_FOUND_IN_FAVS = 'Favorites doesnt contain this element',
+  NOT_AUTHORIZED = 'Only authorized users can access this entry',
   LOGIN_IS_USED = 'This login is already used, try another',
   SERVER_ERROR = 'Interval server error',
 }
