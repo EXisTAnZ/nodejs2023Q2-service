@@ -77,6 +77,16 @@ export default class DBEngine {
     });
   }
 
+  public async loginUser(createUserDto: CreateUserDto) {
+    const user: User = await this.prisma.user.findFirst({
+      where: { login: createUserDto.login },
+    });
+    if (!user) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    if (!this.isAccess(user, createUserDto.password))
+      throw new ForbiddenException(ERROR_MSG.WRONG_PASSWORD);
+    return user;
+  }
+
   public isAccess(user: User, password: string) {
     return user.password === this.hashPass(password);
   }

@@ -8,6 +8,7 @@ import { AlbumModule } from './album/album.module';
 import { FavsModule } from './favs/favs.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AuthModule } from './auth/auth.module';
     AlbumModule,
     FavsModule,
     ConfigModule.forRoot(),
+    JwtModule,
     AuthModule,
   ],
   controllers: [AppController],

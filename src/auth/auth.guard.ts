@@ -12,7 +12,7 @@ import { ERROR_MSG } from 'src/utils/constants';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  private jwtService = new JwtService();
+  constructor(private jwtService: JwtService) {}
 
   canActivate(
     context: ExecutionContext,
