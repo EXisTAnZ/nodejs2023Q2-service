@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import DBEngine from 'src/db/db.engine';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { ERROR_MSG } from 'src/utils/constants';
 
 @Injectable()
 export class AuthService {
@@ -21,8 +22,17 @@ export class AuthService {
     return this.getTokenPair(user);
   }
 
-  refreshToken(token: string) {
-    return `This action refresh token when it expired`;
+  async refreshToken(token: string) {
+    const secret = this.config.get<string>('JWT_SECRET_REFRESH_KEY');
+    try {
+      await this.jwtService.verifyAsync(token, { secret });
+    } catch (err) {
+      throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
+    }
+    const payload = this.jwtService.decode(token);
+    if (!payload) throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
+    const user = await this.dbEngine.getUser(payload['userId']);
+    return this.getTokenPair(user);
   }
 
   getTokenPair(user: User) {
