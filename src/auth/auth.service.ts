@@ -25,12 +25,11 @@ export class AuthService {
   async refreshToken(token: string) {
     const secret = this.config.get<string>('JWT_SECRET_REFRESH_KEY');
     try {
-      await this.jwtService.verifyAsync(token, { secret });
-      const payload = this.jwtService.decode(token);
+      const payload = this.jwtService.verify(token, { secret });
       if (!payload) throw new Error();
       const user = await this.dbEngine.getUser(payload['userId']);
       return this.getTokenPair(user);
-    } catch (err) {
+    } catch {
       throw new ForbiddenException(ERROR_MSG.INVALID_REFRESH_TOKEN);
     }
   }

@@ -20,10 +20,10 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.getToken(request);
     if (!token) throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
-    const jwtSecret =
+    const secret =
       new ConfigService().get<string>('JWT_SECRET_KEY') || 'Net voyne!';
     try {
-      const payload = this.jwtService.verifyAsync(token, { secret: jwtSecret });
+      const payload = this.jwtService.verify(token, { secret });
       request['user'] = payload;
     } catch {
       throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
