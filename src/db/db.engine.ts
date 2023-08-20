@@ -49,7 +49,7 @@ export default class DBEngine {
       await this.prisma.user.create({ data: newUser });
       return newUser;
     } catch (err) {
-      console.log(err.message);
+      throw new UnprocessableEntityException(ERROR_MSG.LOGIN_IS_USED);
     }
   }
 

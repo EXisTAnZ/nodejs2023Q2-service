@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
@@ -30,14 +26,13 @@ export class AuthService {
     const secret = this.config.get<string>('JWT_SECRET_REFRESH_KEY');
     try {
       await this.jwtService.verifyAsync(token, { secret });
+      const payload = this.jwtService.decode(token);
+      if (!payload) throw new Error();
+      const user = await this.dbEngine.getUser(payload['userId']);
+      return this.getTokenPair(user);
     } catch (err) {
       throw new ForbiddenException(ERROR_MSG.INVALID_REFRESH_TOKEN);
     }
-    const payload = this.jwtService.decode(token);
-    if (!payload)
-      throw new UnauthorizedException(ERROR_MSG.INVALID_REFRESH_TOKEN);
-    const user = await this.dbEngine.getUser(payload['userId']);
-    return this.getTokenPair(user);
   }
 
   getTokenPair(user: User) {
