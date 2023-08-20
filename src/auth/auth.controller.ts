@@ -2,12 +2,15 @@ import {
   Controller,
   Post,
   Body,
+  UnauthorizedException,
   UseInterceptors,
   ClassSerializerInterceptor,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ERROR_MSG } from 'src/utils/constants';
 
 @Controller('auth')
 export class AuthController {
@@ -20,14 +23,16 @@ export class AuthController {
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
+  @HttpCode(200)
   @Post('login')
   login(@Body() createUserDto: CreateUserDto) {
     return this.authService.login(createUserDto);
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Post('refresh')
   create(@Body() refreshTokenDto: RefreshTokenDto) {
+    if (!refreshTokenDto.refreshToken)
+      throw new UnauthorizedException(ERROR_MSG.INVALID_REFRESH_TOKEN);
     return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 }

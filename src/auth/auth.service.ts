@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
@@ -27,10 +31,11 @@ export class AuthService {
     try {
       await this.jwtService.verifyAsync(token, { secret });
     } catch (err) {
-      throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
+      throw new ForbiddenException(ERROR_MSG.INVALID_REFRESH_TOKEN);
     }
     const payload = this.jwtService.decode(token);
-    if (!payload) throw new UnauthorizedException(ERROR_MSG.NOT_AUTHORIZED);
+    if (!payload)
+      throw new UnauthorizedException(ERROR_MSG.INVALID_REFRESH_TOKEN);
     const user = await this.dbEngine.getUser(payload['userId']);
     return this.getTokenPair(user);
   }
