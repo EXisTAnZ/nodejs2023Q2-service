@@ -30,6 +30,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @HttpCode(200)
   create(@Body() refreshTokenDto: RefreshTokenDto) {
     if (!refreshTokenDto.refreshToken)
       throw new UnauthorizedException(ERROR_MSG.INVALID_REFRESH_TOKEN);

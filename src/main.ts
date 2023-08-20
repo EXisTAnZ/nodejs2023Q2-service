@@ -3,11 +3,14 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { RsLoggerService } from './utils/services/logger.service';
 
 async function bootstrap() {
   const config = new ConfigService();
   const PORT = config.get<number>('PORT');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new RsLoggerService(),
+  });
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Home library')
