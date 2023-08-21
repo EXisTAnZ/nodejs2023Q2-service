@@ -11,6 +11,8 @@ import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RsLoggerService } from './utils/services/logger.service';
 import { FsService } from './utils/services/fs.service';
+import { RsExceptionFilter } from './utils/middlewares/exception-filter';
+import { APP_FILTER } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -24,6 +26,14 @@ import { FsService } from './utils/services/fs.service';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, RsLoggerService, FsService],
+  providers: [
+    AppService,
+    RsLoggerService,
+    FsService,
+    {
+      provide: APP_FILTER,
+      useClass: RsExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
