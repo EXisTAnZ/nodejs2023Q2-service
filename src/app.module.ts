@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RsLoggerService } from './utils/services/logger.service';
+import { FsService } from './utils/services/fs.service';
 
 @Module({
   imports: [
@@ -23,6 +24,6 @@ import { RsLoggerService } from './utils/services/logger.service';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, RsLoggerService],
+  providers: [AppService, RsLoggerService, FsService],
 })
 export class AppModule {}

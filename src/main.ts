@@ -9,7 +9,7 @@ async function bootstrap() {
   const config = new ConfigService();
   const PORT = config.get<number>('PORT');
   const app = await NestFactory.create(AppModule, {
-    logger: new RsLoggerService(),
+    logger: new RsLoggerService(config),
   });
 
   const swaggerConfig = new DocumentBuilder()

@@ -1,27 +1,45 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { ConsoleLogger, Injectable, LogLevel } from '@nestjs/common';
+import { FsService } from './fs.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class RsLoggerService implements LoggerService{
+export class RsLoggerService extends ConsoleLogger {
+  private fsService: FsService;
 
-  log(message: any, ...optionalParams: any[]) {}
+  constructor(private configService: ConfigService) {
+    super();
+    this.fsService = new FsService(configService);
+    const logLevel = configService.get('LOG_LEVEL') || 3;
+    this.setLogLevels(this.getLogLevelsByCode(logLevel));
+  }
 
-  /**
-   * Write an 'error' level log.
-   */
-  error(message: any, ...optionalParams: any[]) {}
+  log(message: any, context?: string) {
+    super.log(message, context);
+    this.fsService.writeMessageToFile(message, false);
+  }
 
-  /**
-   * Write a 'warn' level log.
-   */
-  warn(message: any, ...optionalParams: any[]) {}
+  error(message: any, stack?: string, context?: string) {
+    super.error(message, stack, context);
+    this.fsService.writeMessageToFile(message, true);
+  }
 
-  /**
-   * Write a 'debug' level log.
-   */
-  debug?(message: any, ...optionalParams: any[]) {}
+  warn(message: any, context?: string) {
+    super.warn(message, context);
+    this.fsService.writeMessageToFile(message, false);
+  }
 
-  /**
-   * Write a 'verbose' level log.
-   */
-  verbose?(message: any, ...optionalParams: any[]) {}
+  debug(message: any, context?: string) {
+    super.debug(message, context);
+    this.fsService.writeMessageToFile(message, false);
+  }
+
+  verbose(message: any, context?: string) {
+    super.verbose(message, context);
+    this.fsService.writeMessageToFile(message, false);
+  }
+
+  private getLogLevelsByCode(level: number) {
+    const LOG_LEVELS: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose'];
+    return LOG_LEVELS.slice(0, level);
+  }
 }
