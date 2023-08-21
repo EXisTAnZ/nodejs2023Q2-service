@@ -17,8 +17,8 @@ export class FsService {
   }
   public async writeMessageToFile(message: string, isErr: boolean) {
     const filePath = isErr ? this.errFilePath : this.logFilePath;
-    await this.logFileRotate(filePath);
     writeFile(filePath, message, { flag: 'a' });
+    await this.logFileRotate(filePath);
   }
 
   private async logFileRotate(filePath: string) {
