@@ -10,7 +10,7 @@ datasource db {
 
 model User {
   id        String @id
-  login     String
+  login     String @unique
   password  String
   version   Int
   createdAt Float

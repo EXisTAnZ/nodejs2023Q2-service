@@ -49,7 +49,7 @@ export default class DBEngine {
       await this.prisma.user.create({ data: newUser });
       return newUser;
     } catch (err) {
-      console.log(err.message);
+      throw new UnprocessableEntityException(ERROR_MSG.LOGIN_IS_USED);
     }
   }
 
@@ -75,6 +75,16 @@ export default class DBEngine {
     await this.prisma.user.delete({
       where: { id: userId },
     });
+  }
+
+  public async loginUser(createUserDto: CreateUserDto) {
+    const user: User = await this.prisma.user.findFirst({
+      where: { login: createUserDto.login },
+    });
+    if (!user) throw new NotFoundException(ERROR_MSG.NOT_FOUND_USER);
+    if (!this.isAccess(user, createUserDto.password))
+      throw new ForbiddenException(ERROR_MSG.WRONG_PASSWORD);
+    return user;
   }
 
   public isAccess(user: User, password: string) {
