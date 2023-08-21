@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -13,6 +13,7 @@ import { RsLoggerService } from './utils/services/logger.service';
 import { FsService } from './utils/services/fs.service';
 import { RsExceptionFilter } from './utils/middlewares/exception-filter';
 import { APP_FILTER } from '@nestjs/core';
+import { RestLogMiddleware } from './utils/middlewares/request-catcher';
 
 @Module({
   imports: [
@@ -36,4 +37,8 @@ import { APP_FILTER } from '@nestjs/core';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RestLogMiddleware).forRoutes('*');
+  }
+}
